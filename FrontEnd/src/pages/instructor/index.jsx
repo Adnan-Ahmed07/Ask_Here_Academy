@@ -5,11 +5,12 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { AuthContext } from "@/context/auth-context";
 import { BarChart, Book, LogOut } from "lucide-react";
 import { useContext, useState } from "react";
-import { toast } from "sonner";
+import { toast, useSonner } from "sonner";
 
 const InstructorDashboardpage=()=> {
   const [activeTab, setActiveTab] = useState("dashboard");
   const { resetCredentials } = useContext(AuthContext);
+  const {toast}=useSonner();
   const menuItems = [
     {
       icon: BarChart,
@@ -33,7 +34,7 @@ const InstructorDashboardpage=()=> {
   function handleLogout() {
     resetCredentials();
     sessionStorage.clear();
-    toast.success("Logged out successfully!"); // Add toast notification
+    toast("Logged out successfully!"); // Add toast notification
   }
   return(
 <div className="flex h-full min-h-screen bg-gray-100">
