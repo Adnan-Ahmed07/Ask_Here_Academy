@@ -5,12 +5,13 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { AuthContext } from "@/context/auth-context";
 import { BarChart, Book, LogOut } from "lucide-react";
 import { useContext, useState } from "react";
-import { toast, useSonner } from "sonner";
+import { useToast } from "@/hooks/use-toast";
+
 
 const InstructorDashboardpage=()=> {
   const [activeTab, setActiveTab] = useState("dashboard");
   const { resetCredentials } = useContext(AuthContext);
-  const {toast}=useSonner();
+  const {toast}=useToast();
   const menuItems = [
     {
       icon: BarChart,
