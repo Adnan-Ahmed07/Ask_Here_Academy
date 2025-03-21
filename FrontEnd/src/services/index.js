@@ -18,3 +18,10 @@ export async function checkAuthService() {
 
   return data;
 }
+export async function mediaUploadService(formData) {
+  const { data } = await axiosInstance.post("/media/upload", formData
+  
+)
+
+  return data;
+}
