@@ -1,3 +1,4 @@
+import MediaProgressbar from "@/components/media-progress-bar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,7 +11,8 @@ import { useContext } from "react";
 
 const CourseCurriculum = () => {
   const { courseCurriculumFormData, setCourseCurriculumFormData,mediaUploadProgress,
-    setMediaUploadProgress, } =
+    setMediaUploadProgress, mediaUploadProgressPercentage,
+    setMediaUploadProgressPercentage, } =
     useContext(InstructorContext);
 
   function handleNewLecture() {
@@ -50,7 +52,7 @@ const CourseCurriculum = () => {
       try {
         setMediaUploadProgress(true);
         const response = await mediaUploadService(
-          videoFormData
+          videoFormData,setMediaUploadProgressPercentage
          
         );
         console.log(response);
@@ -77,6 +79,12 @@ const CourseCurriculum = () => {
       </CardHeader>
       <CardContent>
         <Button onClick={handleNewLecture}>Add Lecture</Button>
+        {mediaUploadProgress ? (
+          <MediaProgressbar
+            isMediaUploading={mediaUploadProgress}
+            progress={mediaUploadProgressPercentage}
+          />
+        ) : null}
         <div className="mt-4 space-y-4">
           {courseCurriculumFormData.map((curriculumItem, index) => (
             <div className="border p-5 rounded-md">
