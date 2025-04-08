@@ -1,3 +1,4 @@
+import MediaProgressbar from "@/components/media-progress-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,7 +9,10 @@ import { useContext } from "react";
 const CourseSettings=()=>{ 
   const {
     courseLandingFormData,
-    setCourseLandingFormData,}= useContext(InstructorContext);
+    setCourseLandingFormData,   mediaUploadProgress,
+    setMediaUploadProgress,
+    mediaUploadProgressPercentage,
+    setMediaUploadProgressPercentage,}= useContext(InstructorContext);
 
     async function handleImageUploadChange(event) {
       const selectedImage = event.target.files[0];
@@ -18,9 +22,9 @@ const CourseSettings=()=>{
         imageFormData.append("file", selectedImage);
   
         try {
-          // setMediaUploadProgress(true);
+          setMediaUploadProgress(true);
           const response = await mediaUploadService(
-            imageFormData,
+            imageFormData,setMediaUploadProgressPercentage
            
           );
           if (response.success) {
@@ -28,7 +32,7 @@ const CourseSettings=()=>{
               ...courseLandingFormData,
               image: response.data.url,
             });
-            // setMediaUploadProgress(false);
+            setMediaUploadProgress(false);
           }
         } catch (e) {
           console.log(e);
@@ -43,6 +47,12 @@ const CourseSettings=()=>{
     </CardHeader>
     <div className="p-4">
     
+    {mediaUploadProgress ? (
+          <MediaProgressbar
+            isMediaUploading={mediaUploadProgress}
+            progress={mediaUploadProgressPercentage}
+          />
+        ) : null}
     </div>
     <CardContent>
         {courseLandingFormData?.image ? (
