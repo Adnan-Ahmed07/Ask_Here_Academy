@@ -4,16 +4,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import VideoPlayer from "@/components/video-player";
 import { courseCurriculumInitialFormData } from "@/config";
 import { InstructorContext } from "@/context/instructor-context";
 import { mediaUploadService } from "@/services";
 import { useContext } from "react";
 
 const CourseCurriculum = () => {
-  const { courseCurriculumFormData, setCourseCurriculumFormData,mediaUploadProgress,
-    setMediaUploadProgress, mediaUploadProgressPercentage,
-    setMediaUploadProgressPercentage, } =
-    useContext(InstructorContext);
+  const {
+    courseCurriculumFormData,
+    setCourseCurriculumFormData,
+    mediaUploadProgress,
+    setMediaUploadProgress,
+    mediaUploadProgressPercentage,
+    setMediaUploadProgressPercentage,
+  } = useContext(InstructorContext);
 
   function handleNewLecture() {
     setCourseCurriculumFormData([
@@ -52,8 +57,8 @@ const CourseCurriculum = () => {
       try {
         setMediaUploadProgress(true);
         const response = await mediaUploadService(
-          videoFormData,setMediaUploadProgressPercentage
-         
+          videoFormData,
+          setMediaUploadProgressPercentage
         );
         console.log(response);
         if (response.success) {
@@ -98,20 +103,49 @@ const CourseCurriculum = () => {
                   value={courseCurriculumFormData[index]?.title}
                 />
                 <div className="flex items-center space-x-2">
-                  <Switch  onCheckedChange={(value) =>
+                  <Switch
+                    onCheckedChange={(value) =>
                       handleFreePreviewChange(value, index)
-                    }  checked={courseCurriculumFormData[index]?.freePreview}
-                    id={`freePreview-${index + 1}`} />
+                    }
+                    checked={courseCurriculumFormData[index]?.freePreview}
+                    id={`freePreview-${index + 1}`}
+                  />
                   <Label htmlFor={`freePreview-${index + 1}`}>
                     Free Preview
                   </Label>
                 </div>
               </div>
               <div className="mt-6">
-                <Input type="file" accept="video/*"   onChange={(event) =>
-                      handleSingleLectureUpload(event, index)
-                    }
-                    className="mb-4" />
+           {
+            courseCurriculumFormData[index]?.videoUrl ?(
+            <div className="flex gap-3">
+               <VideoPlayer
+                      url={courseCurriculumFormData[index]?.videoUrl}
+                      
+            
+                    />
+                      <Button >
+                      Replace Video
+                    </Button>
+                    <Button
+                      
+                      className="bg-red-900"
+                    >
+                      Delete Lecture
+                    </Button>
+              </div> ):(
+                 <Input
+                 type="file"
+                 accept="video/*"
+                 onChange={(event) =>
+                   handleSingleLectureUpload(event, index)
+                 }
+                 className="mb-4"
+               />
+
+           )}
+               
+                
               </div>
             </div>
           ))}
