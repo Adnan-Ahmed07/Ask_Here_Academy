@@ -15,7 +15,7 @@ const CourseLanding=()=>{
       <CardContent>
         <FormControls
           formControls={courseLandingPageFormControls}
-          formData={courseLandingInitialFormData}
+          formData={ courseLandingFormData}
           setFormData={setCourseLandingFormData}
         />
       </CardContent>
