@@ -33,4 +33,4 @@ const CourseSchema = new mongoose.Schema({
   isPublised: Boolean,
 });
 
-module.exports = mongoose.model("Course", CourseSchema);
+module.exports = mongoose.model('Course', CourseSchema);

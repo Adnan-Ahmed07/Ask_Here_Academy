@@ -123,7 +123,7 @@ export const courseLandingPageFormControls = [
   {
     name: "description",
     label: "Description",
-    componentType: "textarea",
+    componentType: "input",
     type: "text",
     placeholder: "Enter course description",
   },
@@ -137,14 +137,14 @@ export const courseLandingPageFormControls = [
   {
     name: "objectives",
     label: "Objectives",
-    componentType: "textarea",
+    componentType: "input",
     type: "text",
     placeholder: "Enter course objectives",
   },
   {
     name: "welcomeMessage",
     label: "Welcome Message",
-    componentType: "textarea",
+    componentType: "input",
     placeholder: "Welcome message for students",
   },
 ];
