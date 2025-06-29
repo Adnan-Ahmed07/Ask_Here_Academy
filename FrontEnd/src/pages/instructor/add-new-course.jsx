@@ -4,24 +4,30 @@ import CourseSettings from "@/components/instructor-view/add-new-course/course-s
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { courseCurriculumInitialFormData, courseLandingInitialFormData } from "@/config";
+import {
+  courseCurriculumInitialFormData,
+  courseLandingInitialFormData,
+} from "@/config";
 import { AuthContext } from "@/context/auth-context";
 import { InstructorContext } from "@/context/instructor-context";
-import { addNewCourseService } from "@/services";
-import { useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { addNewCourseService, fetchInstructorCourseDetailsService } from "@/services";
+import { useContext, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
-const AddNewCoursePage=()=>{ 
+const AddNewCoursePage = () => {
   const {
     courseLandingFormData,
     courseCurriculumFormData,
-     setCourseLandingFormData,
+    setCourseLandingFormData,
     setCourseCurriculumFormData,
-  
+     currentEditedCourseId,
+    setCurrentEditedCourseId,
   } = useContext(InstructorContext);
-   const { auth } = useContext(AuthContext);
-   const navigate = useNavigate();
+  const { auth } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const params = useParams();
 
+  console.log(params);
   function isEmpty(value) {
     if (Array.isArray(value)) {
       return value.length === 0;
@@ -56,7 +62,7 @@ const AddNewCoursePage=()=>{
     return hasFreePreview;
   }
 
-    async function handleCreateCourse() {
+  async function handleCreateCourse() {
     const courseFinalFormData = {
       instructorId: auth?.user?._id,
       instructorName: auth?.user?.userName,
@@ -67,8 +73,7 @@ const AddNewCoursePage=()=>{
       isPublised: true,
     };
 
-    const response =
-     await addNewCourseService(courseFinalFormData);
+    const response = await addNewCourseService(courseFinalFormData);
 
     if (response?.success) {
       setCourseLandingFormData(courseLandingInitialFormData);
@@ -79,19 +84,46 @@ const AddNewCoursePage=()=>{
 
     console.log(courseFinalFormData, "courseFinalFormData");
   }
-  return(
+   async function fetchCurrentCourseDetails() {
+    const response = await fetchInstructorCourseDetailsService(
+      currentEditedCourseId
+    );
+
+    if (response?.success) {
+      const setCourseFormData = Object.keys(
+        courseLandingInitialFormData
+      ).reduce((acc, key) => {
+        acc[key] = response?.data[key] || courseLandingInitialFormData[key];
+
+        return acc;
+      }, {});
+
+      console.log(setCourseFormData, response?.data, "setCourseFormData");
+      setCourseLandingFormData(setCourseFormData);
+      setCourseCurriculumFormData(response?.data?.curriculum);
+    }
+
+    console.log(response, "response");
+  }
+ useEffect(() => {
+    if (currentEditedCourseId !== null) fetchCurrentCourseDetails();
+  }, [currentEditedCourseId]);
+useEffect(() => {
+    if (params?.courseId) setCurrentEditedCourseId(params?.courseId);
+  }, [params?.courseId]);
+  return (
     <div className="container mx-auto p-4">
-    <div className="flex justify-between">
-      <h1 className="text-3xl font-extrabold mb-5">Create a new course</h1>
-      <Button
-       disabled={!validateFormData()}
-        className="text-sm tracking-wider font-bold px-8"
-       onClick={handleCreateCourse}
-      >
-        SUBMIT
-      </Button>
-    </div>
-    <Card>
+      <div className="flex justify-between">
+        <h1 className="text-3xl font-extrabold mb-5">Create a new course</h1>
+        <Button
+          disabled={!validateFormData()}
+          className="text-sm tracking-wider font-bold px-8"
+          onClick={handleCreateCourse}
+        >
+          SUBMIT
+        </Button>
+      </div>
+      <Card>
         <CardContent>
           <div className="container mx-auto p-4">
             <Tabs defaultValue="curriculum" className="space-y-4">
@@ -103,13 +135,13 @@ const AddNewCoursePage=()=>{
                 <TabsTrigger value="settings">Settings</TabsTrigger>
               </TabsList>
               <TabsContent value="curriculum">
-                <CourseCurriculum/>
+                <CourseCurriculum />
               </TabsContent>
               <TabsContent value="course-landing-page">
-                <CourseLanding/> 
+                <CourseLanding />
               </TabsContent>
               <TabsContent value="settings">
-                <CourseSettings/> 
+                <CourseSettings />
               </TabsContent>
             </Tabs>
           </div>
@@ -117,7 +149,6 @@ const AddNewCoursePage=()=>{
       </Card>
     </div>
   );
-}
-
+};
 
 export default AddNewCoursePage;
