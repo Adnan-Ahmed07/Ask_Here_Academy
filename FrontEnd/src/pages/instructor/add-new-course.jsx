@@ -10,7 +10,7 @@ import {
 } from "@/config";
 import { AuthContext } from "@/context/auth-context";
 import { InstructorContext } from "@/context/instructor-context";
-import { addNewCourseService, fetchInstructorCourseDetailsService } from "@/services";
+import { addNewCourseService, fetchInstructorCourseDetailsService, updateCourseByIdService } from "@/services";
 import { useContext, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -73,13 +73,18 @@ const AddNewCoursePage = () => {
       isPublised: true,
     };
 
-    const response = await addNewCourseService(courseFinalFormData);
+    const response = currentEditedCourseId !== null
+        ? await updateCourseByIdService(
+            currentEditedCourseId,
+            courseFinalFormData
+          )
+        : await addNewCourseService(courseFinalFormData);
 
     if (response?.success) {
       setCourseLandingFormData(courseLandingInitialFormData);
       setCourseCurriculumFormData(courseCurriculumInitialFormData);
       navigate(-1);
-      alert("Course created successfully!");
+       setCurrentEditedCourseId(null);
     }
 
     console.log(courseFinalFormData, "courseFinalFormData");
