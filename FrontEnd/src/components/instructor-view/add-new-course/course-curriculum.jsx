@@ -7,7 +7,11 @@ import { Switch } from "@/components/ui/switch";
 import VideoPlayer from "@/components/video-player";
 import { courseCurriculumInitialFormData } from "@/config";
 import { InstructorContext } from "@/context/instructor-context";
-import { mediaBulkUploadService, mediaDeleteService, mediaUploadService } from "@/services";
+import {
+  mediaBulkUploadService,
+  mediaDeleteService,
+  mediaUploadService,
+} from "@/services";
 import { Upload } from "lucide-react";
 import { useContext, useRef } from "react";
 
@@ -20,7 +24,7 @@ const CourseCurriculum = () => {
     mediaUploadProgressPercentage,
     setMediaUploadProgressPercentage,
   } = useContext(InstructorContext);
-const bulkUploadInputRef = useRef(null);
+  const bulkUploadInputRef = useRef(null);
   function handleNewLecture() {
     setCourseCurriculumFormData([
       ...courseCurriculumFormData,
@@ -110,7 +114,7 @@ const bulkUploadInputRef = useRef(null);
   function handleOpenBulkUploadDialog() {
     bulkUploadInputRef.current?.click();
   }
-   function areAllCourseCurriculumFormDataObjectsEmpty(arr) {
+  function areAllCourseCurriculumFormDataObjectsEmpty(arr) {
     return arr.every((obj) => {
       return Object.entries(obj).every(([key, value]) => {
         if (typeof value === "boolean") {
@@ -120,7 +124,7 @@ const bulkUploadInputRef = useRef(null);
       });
     });
   }
-async function handleMediaBulkUpload(event) {
+  async function handleMediaBulkUpload(event) {
     const selectedFiles = Array.from(event.target.files);
     const bulkFormData = new FormData();
 
@@ -158,7 +162,22 @@ async function handleMediaBulkUpload(event) {
       console.log(e);
     }
   }
+  async function handleDeleteLecture(currentIndex) {
+    let cpyCourseCurriculumFormData = [...courseCurriculumFormData];
+    const getCurrentSelectedVideoPublicId =
+      cpyCourseCurriculumFormData[currentIndex].public_id;
 
+    const response = await mediaDeleteService(getCurrentSelectedVideoPublicId);
+
+    if (response?.success) {
+      cpyCourseCurriculumFormData = cpyCourseCurriculumFormData.filter(
+        (_, index) => index !== currentIndex
+      );
+
+      setCourseCurriculumFormData(cpyCourseCurriculumFormData);
+    }
+    console.log(cpyCourseCurriculumFormData[currentIndex], "Delete hoyeche ki na check korar jonno");
+  }
   return (
     <Card>
       <CardHeader className="flex flex-row justify-between">
@@ -171,7 +190,7 @@ async function handleMediaBulkUpload(event) {
             multiple
             className="hidden"
             id="bulk-media-upload"
-            // onChange={handleMediaBulkUpload}
+            onChange={handleMediaBulkUpload}
           />
           <Button
             as="label"
@@ -186,7 +205,12 @@ async function handleMediaBulkUpload(event) {
         </div>
       </CardHeader>
       <CardContent>
-        <Button disabled={!isCourseCurriculumFormDataValid() || mediaUploadProgress} onClick={handleNewLecture}>Add Lecture</Button>
+        <Button
+          disabled={!isCourseCurriculumFormDataValid() || mediaUploadProgress}
+          onClick={handleNewLecture}
+        >
+          Add Lecture
+        </Button>
         {mediaUploadProgress ? (
           <MediaProgressbar
             isMediaUploading={mediaUploadProgress}
@@ -219,37 +243,33 @@ async function handleMediaBulkUpload(event) {
                 </div>
               </div>
               <div className="mt-6">
-           {
-            courseCurriculumFormData[index]?.videoUrl ?(
-            <div className="flex gap-3">
-               <VideoPlayer
+                {courseCurriculumFormData[index]?.videoUrl ? (
+                  <div className="flex gap-3">
+                    <VideoPlayer
                       url={courseCurriculumFormData[index]?.videoUrl}
                       width="450px"
                       height="200px"
-            
                     />
-                      <Button onClick={() => handleReplaceVideo(index)}>
+                    <Button onClick={() => handleReplaceVideo(index)}>
                       Replace Video
                     </Button>
                     <Button
-                      
+                      onClick={() => handleDeleteLecture(index)}
                       className="bg-red-900"
                     >
                       Delete Lecture
                     </Button>
-              </div> ):(
-                 <Input
-                 type="file"
-                 accept="video/*"
-                 onChange={(event) =>
-                   handleSingleLectureUpload(event, index)
-                 }
-                 className="mb-4"
-               />
-
-           )}
-               
-                
+                  </div>
+                ) : (
+                  <Input
+                    type="file"
+                    accept="video/*"
+                    onChange={(event) =>
+                      handleSingleLectureUpload(event, index)
+                    }
+                    className="mb-4"
+                  />
+                )}
               </div>
             </div>
           ))}
