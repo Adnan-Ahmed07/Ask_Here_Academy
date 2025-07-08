@@ -2,7 +2,6 @@ import axiosInstance from "@/api/axiosInstance";
 export async function registerService(formData) {
   const { data } = await axiosInstance.post("/auth/register", {
     ...formData,
-    
   });
 
   return data;
@@ -19,7 +18,7 @@ export async function checkAuthService() {
   return data;
 }
 export async function mediaUploadService(formData, onProgressCallback) {
-  const { data } = await axiosInstance.post("/media/upload", formData,{
+  const { data } = await axiosInstance.post("/media/upload", formData, {
     onUploadProgress: (progressEvent) => {
       const percentCompleted = Math.round(
         (progressEvent.loaded * 100) / progressEvent.total
@@ -27,7 +26,6 @@ export async function mediaUploadService(formData, onProgressCallback) {
       onProgressCallback(percentCompleted);
     },
   });
-
 
   return data;
 }
@@ -73,6 +71,19 @@ export async function mediaBulkUploadService(formData, onProgressCallback) {
       onProgressCallback(percentCompleted);
     },
   });
+
+  return data;
+}
+export async function fetchStudentViewCourseListService(query) {
+  const { data } = await axiosInstance.get(`/student/course/get?${query}`);
+
+  return data;
+}
+
+export async function fetchStudentViewCourseDetailsService(courseId) {
+  const { data } = await axiosInstance.get(
+    `/student/course/get/details/${courseId}`
+  );
 
   return data;
 }
