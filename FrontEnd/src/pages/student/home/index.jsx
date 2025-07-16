@@ -4,10 +4,12 @@ import { courseCategories } from "@/config";
 import { useContext, useEffect } from "react";
 import { StudentContext } from "@/context/student-context";
 import { fetchStudentViewCourseListService } from "@/services";
+import { useNavigate } from "react-router-dom";
 
 const StudentHomePage = () => {
   const { studentViewCoursesList, setStudentViewCoursesList } =
     useContext(StudentContext);
+    
   async function fetchAllStudentViewCourses() {
     const response = await fetchStudentViewCourseListService();
     if (response?.success) setStudentViewCoursesList(response?.data);
@@ -61,7 +63,7 @@ useEffect(() => {
                 className="border rounded-lg overflow-hidden shadow cursor-pointer"
               >
                 <img
-                  src
+                   src={courseItem?.image}
                   width={300}
                   height={150}
                   className="w-full h-40 object-cover"
@@ -69,10 +71,10 @@ useEffect(() => {
                 <div className="p-4">
                   <h3 className="font-bold mb-2">{courseItem?.title}</h3>
                   <p className="text-sm text-gray-700 mb-2">
-                    courseItem instructorName
+                    {courseItem?.instructorName}
                   </p>
                   <p className="font-bold text-[16px]">
-                    $courseItem pricing
+                   ${courseItem?.pricing}
                   </p>
                 </div>
               </div>
