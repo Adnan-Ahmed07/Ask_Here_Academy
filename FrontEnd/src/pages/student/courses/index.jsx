@@ -30,15 +30,14 @@ function createSearchParamsHelper(filterParams) {
   return queryParams.join("&");
 }
 
-
 const StudentViewCoursesPage = () => {
   const [sort, setSort] = useState("price-lowtohigh");
   const [filters, setFilters] = useState({});
   const { studentViewCoursesList, setStudentViewCoursesList } =
     useContext(StudentContext);
-const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-function handleFilterOnChange(getSectionId, getCurrentOption) {
+  function handleFilterOnChange(getSectionId, getCurrentOption) {
     let cpyFilters = { ...filters };
     const indexOfCurrentSeection =
       Object.keys(cpyFilters).indexOf(getSectionId);
@@ -65,8 +64,12 @@ function handleFilterOnChange(getSectionId, getCurrentOption) {
     sessionStorage.setItem("filters", JSON.stringify(cpyFilters));
   }
 
-  async function fetchAllStudentViewCourses() {
-    const response = await fetchStudentViewCourseListService();
+  async function fetchAllStudentViewCourses(filters, sort) {
+    const query = new URLSearchParams({
+      ...filters,
+      sortBy: sort,
+    });
+    const response = await fetchStudentViewCourseListService(query);
     if (response?.success) setStudentViewCoursesList(response?.data);
   }
   useEffect(() => {
@@ -74,7 +77,17 @@ function handleFilterOnChange(getSectionId, getCurrentOption) {
     setSearchParams(new URLSearchParams(buildQueryStringForFilters));
   }, [filters]);
   useEffect(() => {
-    fetchAllStudentViewCourses();
+    setSort("price-lowtohigh");
+    setFilters(JSON.parse(sessionStorage.getItem("filters")) || {});
+  }, []);
+  useEffect(() => {
+    if (filters !== null && sort !== null)
+      fetchAllStudentViewCourses(filters, sort);
+  }, [filters, sort]);
+  useEffect(() => {
+    return () => {
+      sessionStorage.removeItem("filters");
+    };
   }, []);
   return (
     <div className="container mx-auto p-4">
@@ -136,45 +149,46 @@ function handleFilterOnChange(getSectionId, getCurrentOption) {
                 </DropdownMenuRadioGroup>
               </DropdownMenuContent>
             </DropdownMenu>
-            <span className="text-sm text-black font-bold">10 Results</span>
+            <span className="text-sm text-black font-bold"> {studentViewCoursesList.length} Results</span>
           </div>
           <div className="space-y-4">
-            {studentViewCoursesList && studentViewCoursesList.length > 0 ? 
-              studentViewCoursesList.map(courseItem =>(
-                <Card  className="cursor-pointer"
-                  key={courseItem?._id}>
+            {studentViewCoursesList && studentViewCoursesList.length > 0 ? (
+              studentViewCoursesList.map((courseItem) => (
+                <Card className="cursor-pointer" key={courseItem?._id}>
                   <CardContent className="flex gap-4 p-4">
-                  <div className="w-48 h-32 flex-shrink-0">
-                     <img
+                    <div className="w-48 h-32 flex-shrink-0">
+                      <img
                         src={courseItem?.image}
                         className="w-ful h-full object-cover"
                       />
-                  </div>
-                  <div className="flex-1">
-                     <CardTitle className="text-xl mb-2">
+                    </div>
+                    <div className="flex-1">
+                      <CardTitle className="text-xl mb-2">
                         {courseItem?.title}
                       </CardTitle>
-                       <p className="text-sm text-gray-600 mb-1">
+                      <p className="text-sm text-gray-600 mb-1">
                         Created By{" "}
                         <span className="font-bold">
                           {courseItem?.instructorName}
                         </span>
                       </p>
-                       <p className="text-[16px] text-gray-600 mt-3 mb-2">
-                       {`${courseItem?.curriculum?.length} ${
+                      <p className="text-[16px] text-gray-600 mt-3 mb-2">
+                        {`${courseItem?.curriculum?.length} ${
                           courseItem?.curriculum?.length <= 1
                             ? "Lecture"
                             : "Lectures"
                         } - ${courseItem?.level.toUpperCase()} Level`}
-                       </p>
-                       <p className="font-bold text-lg">
+                      </p>
+                      <p className="font-bold text-lg">
                         ${courseItem?.pricing}
                       </p>
-                  </div>
+                    </div>
                   </CardContent>
                 </Card>
-              )):<h1 className="font-extrabold text-4xl">No Courses Found</h1>
-              }
+              ))
+            ) : (
+              <h1 className="font-extrabold text-4xl">No Courses Found</h1>
+            )}
           </div>
         </main>
       </div>
