@@ -9,12 +9,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { filterOptions, sortOptions } from "@/config";
 import { StudentContext } from "@/context/student-context";
 import { fetchStudentViewCourseListService } from "@/services";
 import { ArrowUpDownIcon } from "lucide-react";
 import { useContext, useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 function createSearchParamsHelper(filterParams) {
   const queryParams = [];
@@ -33,8 +34,10 @@ function createSearchParamsHelper(filterParams) {
 const StudentViewCoursesPage = () => {
   const [sort, setSort] = useState("price-lowtohigh");
   const [filters, setFilters] = useState({});
-  const { studentViewCoursesList, setStudentViewCoursesList } =
+  const { studentViewCoursesList, setStudentViewCoursesList,loadingState,
+        setLoadingState } =
     useContext(StudentContext);
+     const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   function handleFilterOnChange(getSectionId, getCurrentOption) {
@@ -70,7 +73,10 @@ const StudentViewCoursesPage = () => {
       sortBy: sort,
     });
     const response = await fetchStudentViewCourseListService(query);
-    if (response?.success) setStudentViewCoursesList(response?.data);
+    if (response?.success) {
+      setStudentViewCoursesList(response?.data);
+      setLoadingState(false);
+    }
   }
   useEffect(() => {
     const buildQueryStringForFilters = createSearchParamsHelper(filters);
@@ -154,7 +160,9 @@ const StudentViewCoursesPage = () => {
           <div className="space-y-4">
             {studentViewCoursesList && studentViewCoursesList.length > 0 ? (
               studentViewCoursesList.map((courseItem) => (
-                <Card className="cursor-pointer" key={courseItem?._id}>
+                <Card 
+                onClick={() => navigate(`/course/details/${courseItem?._id}`)}
+                className="cursor-pointer" key={courseItem?._id}>
                   <CardContent className="flex gap-4 p-4">
                     <div className="w-48 h-32 flex-shrink-0">
                       <img
@@ -183,9 +191,11 @@ const StudentViewCoursesPage = () => {
                         ${courseItem?.pricing}
                       </p>
                     </div>
-                  </CardContent>
+                 </CardContent>
                 </Card>
               ))
+            ) : loadingState ? (
+              <Skeleton />
             ) : (
               <h1 className="font-extrabold text-4xl">No Courses Found</h1>
             )}
