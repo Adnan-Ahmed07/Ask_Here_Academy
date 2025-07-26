@@ -3,8 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import VideoPlayer from "@/components/video-player";
+import { AuthContext } from "@/context/auth-context";
 import { StudentContext } from "@/context/student-context";
-import { fetchStudentViewCourseDetailsService } from "@/services";
+import { createPaymentService, fetchStudentViewCourseDetailsService } from "@/services";
 import { CheckCircle, Globe, Lock, PlayCircle } from "lucide-react";
 import { useContext, useEffect, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
@@ -18,9 +19,11 @@ const StudentViewCourseDetailsPage = () => {
     loadingState,
     setLoadingState,
   } = useContext(StudentContext);
+  const { auth } = useContext(AuthContext);
   const [displayCurrentVideoFreePreview, setDisplayCurrentVideoFreePreview] =
     useState(null);
     const [showFreePreviewDialog, setShowFreePreviewDialog] = useState(false);
+    const [approvalUrl, setApprovalUrl] = useState("");
   const { id } = useParams();
   const location = useLocation();
   async function fetchStudentViewCourseDetails() {
@@ -39,6 +42,36 @@ const StudentViewCourseDetailsPage = () => {
     console.log(getCurrentVideoInfo,"Adnan Video Info");
     setDisplayCurrentVideoFreePreview(getCurrentVideoInfo?.videoUrl);
   }
+  async function handleCreatePayment() {
+    const paymentPayload = {
+      userId: auth?.user?._id,
+      userName: auth?.user?.userName,
+      userEmail: auth?.user?.userEmail,
+      orderStatus: "pending",
+      paymentMethod: "paypal",
+      paymentStatus: "initiated",
+      orderDate: new Date(),
+      paymentId: "",
+      payerId: "",
+      instructorId: studentViewCourseDetails?.instructorId,
+      instructorName: studentViewCourseDetails?.instructorName,
+      courseImage: studentViewCourseDetails?.image,
+      courseTitle: studentViewCourseDetails?.title,
+      courseId: studentViewCourseDetails?._id,
+      coursePricing: studentViewCourseDetails?.pricing,
+    };
+
+    console.log(paymentPayload, "paymentPayload");
+    const response = await createPaymentService(paymentPayload);
+
+    if (response.success) {
+      sessionStorage.setItem(
+        "currentOrderId",
+        JSON.stringify(response?.data?.orderId)
+      );
+      setApprovalUrl(response?.data?.approveUrl);
+    }
+  }
    useEffect(() => {
     if (displayCurrentVideoFreePreview !== null) setShowFreePreviewDialog(true);
   }, [displayCurrentVideoFreePreview]);
@@ -55,6 +88,9 @@ const StudentViewCourseDetailsPage = () => {
         setCoursePurchaseId(null);
   }, [location.pathname]);
   if (loadingState) return <Skeleton />;
+   if (approvalUrl !== "") {
+    window.location.href = approvalUrl;
+  }
   const getIndexOfFreePreviewUrl =
     studentViewCourseDetails !== null
       ? studentViewCourseDetails?.curriculum?.findIndex(
@@ -160,7 +196,7 @@ const StudentViewCourseDetailsPage = () => {
                   ${studentViewCourseDetails?.pricing}
                 </span>
               </div>
-              <Button  className="w-full">
+              <Button onClick={handleCreatePayment} className="w-full">
                 Buy Now
               </Button>
             </CardContent>
