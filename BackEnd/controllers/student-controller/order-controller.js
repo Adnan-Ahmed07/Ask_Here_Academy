@@ -5,24 +5,25 @@ const Order = require("../../models/Order");
 const Course = require("../../models/Course");
 const StudentCourses = require("../../models/StudentCourses");
 
+/**
+ * Ensure URL has protocol (defaults to https:// if missing)
+ */
 function ensureUrl(url) {
   if (!/^https?:\/\//i.test(url)) {
-   
     return `https://${url}`;
   }
   return url;
 }
 
+/**
+ * Create a PayPal order and save it, including redirect URLs
+ */
 const createOrder = async (req, res) => {
   try {
     const {
       userId,
       userName,
       userEmail,
-      orderStatus = "pending",
-      paymentMethod = "paypal",
-      paymentStatus = "unpaid",
-      orderDate = new Date(),
       instructorId,
       instructorName,
       courseImage,
@@ -31,21 +32,38 @@ const createOrder = async (req, res) => {
       coursePricing
     } = req.body;
 
-    
-    const rawClientUrl = process.env.CLIENT_URL;
-    const CLIENT_URL = ensureUrl(rawClientUrl);
-    
-    
+    // Save order first to get its ID
+    const newOrder = new Order({
+      userId,
+      userName,
+      userEmail,
+      orderStatus: "pending",
+      paymentMethod: "paypal",
+      paymentStatus: "unpaid",
+      orderDate: new Date(),
+      instructorId,
+      instructorName,
+      courseImage,
+      courseTitle,
+      courseId,
+      coursePricing: Number(coursePricing)
+    });
+    await newOrder.save();
+
+    // Prepare and validate CLIENT_URL
+    const rawClientUrl = process.env.STUDENT_URL;
+    const STUDENT_URL = ensureUrl(rawClientUrl);
+
+    // Format price
     const priceStr = Number(coursePricing).toFixed(2);
 
+    // Build PayPal payment JSON using validated CLIENT_URL
     const create_payment_json = {
       intent: "sale",
-      payer: {
-        payment_method: "paypal",
-      },
+      payer: { payment_method: "paypal" },
       redirect_urls: {
-        return_url: `${CLIENT_URL}/payment-return`,
-        cancel_url: `${CLIENT_URL}/payment-cancel`,
+        return_url: `${STUDENT_URL}/payment-return`,
+        cancel_url: `${STUDENT_URL}/payment-cancel`
       },
       transactions: [
         {
@@ -56,19 +74,17 @@ const createOrder = async (req, res) => {
                 sku: courseId,
                 price: priceStr,
                 currency: "USD",
-                quantity: 1,
-              },
-            ],
+                quantity: 1
+              }
+            ]
           },
-          amount: {
-            currency: "USD",
-            total: priceStr,
-          },
-          description: courseTitle,
-        },
-      ],
+          amount: { currency: "USD", total: priceStr },
+          description: courseTitle
+        }
+      ]
     };
 
+    // Create PayPal payment
     paypal.payment.create(create_payment_json, async (error, paymentInfo) => {
       if (error) {
         console.error("PayPal Create Error:", error.response?.details || error);
@@ -79,35 +95,19 @@ const createOrder = async (req, res) => {
         });
       }
 
-      const newOrder = new Order({
-        userId,
-        userName,
-        userEmail,
-        orderStatus,
-        paymentMethod,
-        paymentStatus,
-        orderDate,
-        instructorId,
-        instructorName,
-        courseImage,
-        courseTitle,
-        courseId,
-        coursePricing: Number(priceStr),
-      });
-      await newOrder.save();
-
       const approveUrl = paymentInfo.links.find(l => l.rel === "approval_url")?.href;
       if (!approveUrl) {
         console.error("Approval URL not found:", paymentInfo);
         return res.status(500).json({
           success: false,
-          message: "Could not find approval URL from PayPal."
+          message: "Approval URL missing from PayPal response."
         });
       }
 
+      // Respond with approveUrl and orderId
       res.status(201).json({
         success: true,
-        data: { approveUrl, orderId: newOrder._id },
+        data: { approveUrl, orderId: newOrder._id }
       });
     });
 
@@ -115,12 +115,15 @@ const createOrder = async (req, res) => {
     console.error("createOrder Exception:", err);
     res.status(500).json({
       success: false,
-      message: "Some error occurred!",
+      message: "Server error while creating order.",
       error: err.message
     });
   }
 };
 
+/**
+ * Capture PayPal payment and finalize order
+ */
 const capturePaymentAndFinalizeOrder = async (req, res) => {
   try {
     const { paymentId, payerId, orderId } = req.body;
@@ -154,7 +157,7 @@ const capturePaymentAndFinalizeOrder = async (req, res) => {
           instructorId: order.instructorId,
           instructorName: order.instructorName,
           dateOfPurchase: order.orderDate,
-          courseImage: order.courseImage,
+          courseImage: order.courseImage
         };
 
         let studentCourses = await StudentCourses.findOne({ userId: order.userId });
@@ -172,15 +175,15 @@ const capturePaymentAndFinalizeOrder = async (req, res) => {
               studentId: order.userId,
               studentName: order.userName,
               studentEmail: order.userEmail,
-              paidAmount: order.coursePricing,
-            },
-          },
+              paidAmount: order.coursePricing
+            }
+          }
         });
 
         res.status(200).json({
           success: true,
           message: "Order confirmed and payment captured successfully",
-          data: order,
+          data: order
         });
       }
     );
@@ -189,7 +192,7 @@ const capturePaymentAndFinalizeOrder = async (req, res) => {
     console.error("capturePayment Exception:", err);
     res.status(500).json({
       success: false,
-      message: "Some error occurred!",
+      message: "Server error while capturing payment.",
       error: err.message
     });
   }
